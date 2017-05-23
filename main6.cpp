@@ -27,7 +27,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void do_movement();
 
 // Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint WIDTH = 1024, HEIGHT = 800;
 
 // Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -81,7 +81,7 @@ int main() {
 
 
     // Build and compile our shader program
-    Shader cubeShader(PATH(cube/vert.glsl), PATH(cube/frag.glsl));
+    Shader cubeShader(PATH(material/vert.glsl), PATH(material/frag.glsl));
     Shader lampShader(PATH(light/vert.glsl), PATH(light/frag.glsl));
 
     // Set up vertex data (and buffer(s)) and attribute pointers
@@ -177,14 +177,26 @@ int main() {
 
         // Use cooresponding shader when setting uniforms/drawing objects
         cubeShader.Use();
-        GLint objectColorLoc = glGetUniformLocation(cubeShader.Program, "objectColor");
-        GLint lightColorLoc = glGetUniformLocation(cubeShader.Program, "lightColor");
-        GLint lightPosLoc = glGetUniformLocation(cubeShader.Program, "lightPos");
-        GLint viewPosLoc = glGetUniformLocation(cubeShader.Program, "viewPos");
-        glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
-        glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
-        glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
-        glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
+        GLint lightPosLoc    = glGetUniformLocation(cubeShader.Program, "light.position");
+        GLint viewPosLoc     = glGetUniformLocation(cubeShader.Program, "viewPos");
+        glUniform3f(lightPosLoc,    lightPos.x, lightPos.y, lightPos.z);
+        glUniform3f(viewPosLoc,     camera.Position.x, camera.Position.y, camera.Position.z);
+        // Set lights properties
+        glm::vec3 lightColor;
+        lightColor.x = sin(glfwGetTime() * 2.0f);
+        lightColor.y = sin(glfwGetTime() * 0.7f);
+        lightColor.z = sin(glfwGetTime() * 1.3f);
+        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // Decrease the influence
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // Low influence
+        glUniform3f(glGetUniformLocation(cubeShader.Program, "light.ambient"),  ambientColor.x, ambientColor.y, ambientColor.z);
+        glUniform3f(glGetUniformLocation(cubeShader.Program, "light.diffuse"),  diffuseColor.x, diffuseColor.y, diffuseColor.z);
+        glUniform3f(glGetUniformLocation(cubeShader.Program, "light.specular"), 1.0f, 1.0f, 1.0f);
+        // Set material properties
+        glUniform3f(glGetUniformLocation(cubeShader.Program, "material.ambient"),   1.0f, 0.5f, 0.31f);
+        glUniform3f(glGetUniformLocation(cubeShader.Program, "material.diffuse"),   1.0f, 0.5f, 0.31f);
+        glUniform3f(glGetUniformLocation(cubeShader.Program, "material.specular"),  0.5f, 0.5f, 0.5f); // Specular doesn't have full effect on this object's material
+        glUniform1f(glGetUniformLocation(cubeShader.Program, "material.shininess"), 32.0f);
+        
 
         // Create camera transformations
         glm::mat4 view;
@@ -216,7 +228,7 @@ int main() {
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         model = glm::mat4();
         model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.1f)); // Make it a smaller cube
+        model = glm::scale(model, glm::vec3(0.02f)); // Make it a smaller cube
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         // Draw the light object (using light's vertex attributes)
         glBindVertexArray(lightVAO);

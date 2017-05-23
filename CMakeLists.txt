@@ -3,7 +3,7 @@ project(demo)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main5.cpp)
+set(SOURCE_FILES main6.cpp)
 
 set(path "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/lib")
 
@@ -18,5 +18,5 @@ FIND_LIBRARY( SOIL_LIBRARIES SOIL)
 
 include_directories(${OPENGL_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
 
-target_link_libraries(demo ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLFW_LIBRARIES} SOIL.lib)
+target_link_libraries(demo ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLFW_LIBRARIES} SOIL.lib assimp.lib)
 
