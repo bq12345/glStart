@@ -3,7 +3,7 @@ project(demo)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main6.cpp)
+set(SOURCE_FILES main7.cpp)
 
 set(path "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/lib")
 
