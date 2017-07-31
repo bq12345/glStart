@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <windows.h>
+#include <ctime>
 // GLEW
 #include <GL/glew.h>
 // GLFW
@@ -85,12 +86,26 @@ int main() {
     FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 
     // Set size to load glyphs as
-    FT_Set_Pixel_Sizes(face, 0, 48);
+    FT_Set_Pixel_Sizes(face, 0, 24);
     // Disable byte-alignment restriction
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    SYSTEMTIME start;
+    GetSystemTime(&start);
+    std::cout << "Start to load unicode " << start.wMinute << start.wSecond << start.wMilliseconds << std::endl;
+    for (char16_t i = 0x4E00; i < 0x9FA5; i++) {
+        char16_t c = i;
+        if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
+            std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+            continue;
+        }
+        // Store character for later use
+        (*Characters)[c] = getCharacter(face);
+    }
+    GetSystemTime(&start);
+    std::cout << "End to load unicode " << start.wMinute << start.wSecond << start.wMilliseconds << std::endl;
 
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     // Configure VAO/VBO for texture quads
     glGenVertexArrays(1, &VAO);
@@ -120,8 +135,8 @@ int main() {
         GetLocalTime(&sys);
         snprintf(time, len, tpl, sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
 
-        RenderText(shader, "FreeType是一个能够用于加载字体并将他们渲染到位图以及提供多种字体相关的操作的软件开发库", 25.0f, 25.0f, 0.4f, glm::vec3(0.5, 0.8f, 0.2f));
-        RenderText(shader, time, 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+        RenderText(shader, "FreeType是一个能够用于加载字体并将他们渲染到位图以及提供多种字体相关的操作的软件开发库", 25.0f, 200.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+        RenderText(shader, time, 540.0f, 570.0f, 1.0f, glm::vec3(0.3, 0.7f, 0.9f));
 
         // Swap the buffers
         glfwSwapBuffers(window);
@@ -136,6 +151,7 @@ int main() {
 }
 
 void RenderText(Shader &shader, std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color) {
+    GLfloat originX = x;
     // Activate corresponding render state
     shader.Use();
     glUniform3f(glGetUniformLocation(shader.Program, "textColor"), color.x, color.y, color.z);
@@ -158,6 +174,8 @@ void RenderText(Shader &shader, std::string text, GLfloat x, GLfloat y, GLfloat 
         } else {
             ch = (*Characters)[c];
         }
+
+        GLint line = 0;
 
         GLfloat xpos = x + ch.Bearing.x * scale;
         GLfloat ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
@@ -185,6 +203,11 @@ void RenderText(Shader &shader, std::string text, GLfloat x, GLfloat y, GLfloat 
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         x += (ch.Advance >> 6) * scale; // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+        if (x - originX > 500) {
+            x = originX;
+            line++;
+            y -= line * h * 1.5;
+        }
     }
 
     glBindVertexArray(0);
